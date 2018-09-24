@@ -1,0 +1,85 @@
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1beta1
+metadata:
+  name: marketplace-operator
+rules:
+- apiGroups:
+  - marketplace.redhat.com
+  resources:
+  - "*"
+  verbs:
+  - "*"
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  - services
+  - endpoints
+  - persistentvolumeclaims
+  - events
+  - configmaps
+  - secrets
+  verbs:
+  - "*"
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  - daemonsets
+  - replicasets
+  - statefulsets
+  verbs:
+  - "*"
+- apiGroups:
+  - operators.coreos.com
+  resources:
+  - catalogsources
+  verbs:
+  - "*"
+
+---
+
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1beta1
+metadata:
+  name: default-account-marketplace-operator
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: marketplace
+roleRef:
+  kind: ClusterRole
+  name: marketplace-operator
+  apiGroup: rbac.authorization.k8s.io
+
+---
+
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: operatorsources.marketplace.redhat.com
+spec:
+  group: marketplace.redhat.com
+  names:
+    kind: OperatorSource
+    listKind: OperatorSourceList
+    plural: operatorsources
+    singular: operatorsource
+  scope: Namespaced
+  version: v1alpha1
+
+---
+
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: catalogsourceconfigs.marketplace.redhat.com
+spec:
+  group: marketplace.redhat.com
+  names:
+    kind: CatalogSourceConfig
+    listKind: CatalogSourceConfigList
+    plural: catalogsourceconfigs
+    singular: catalogsourceconfig
+  scope: Namespaced
+  version: v1alpha1
