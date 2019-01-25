@@ -51,6 +51,23 @@ metadata:
 spec:
   customresourcedefinitions:
 `
+
+	rawCSVWithVersion = `
+apiVersion: app.coreos.com/v1alpha1
+kind: ClusterServiceVersion
+metadata:
+  name: myapp-operator.v0.2.0
+spec:
+  version: 0.2.0
+`
+
+	rawCSVWithoutVersion = `
+apiVersion: app.coreos.com/v1alpha1
+kind: ClusterServiceVersion
+metadata:
+  name: myapp-operator.v0.2.0
+spec:
+`
 )
 
 // We expect GetReplaces to return the name of the older ClusterServiceVersion
@@ -138,4 +155,38 @@ func TestGetCustomResourceDefintions_NoCRDSpecified_EmptyListExpected(t *testing
 	assert.NoError(t, errGot)
 	assert.Nil(t, ownedGot)
 	assert.Nil(t, requiredGot)
+}
+
+// We expect GetVersion to return the version of the ClusterServiceVersion
+// object
+func TestGetVersion(t *testing.T) {
+	versionWant := "0.2.0"
+
+	jsonRaw, err := yaml.YAMLToJSON([]byte(rawCSVWithVersion))
+	require.NoError(t, err)
+
+	var csv ClusterServiceVersion
+	err = json.Unmarshal(jsonRaw, &csv)
+	require.NoError(t, err)
+
+	versionGot, errGot := csv.GetVersion()
+
+	assert.NoError(t, errGot)
+	assert.Equal(t, versionWant, versionGot)
+}
+
+func TestGetWithoutVersion(t *testing.T) {
+	versionWant := ""
+
+	jsonRaw, err := yaml.YAMLToJSON([]byte(rawCSVWithoutVersion))
+	require.NoError(t, err)
+
+	var csv ClusterServiceVersion
+	err = json.Unmarshal(jsonRaw, &csv)
+	require.NoError(t, err)
+
+	versionGot, errGot := csv.GetVersion()
+
+	assert.NoError(t, errGot)
+	assert.Equal(t, versionWant, versionGot)
 }

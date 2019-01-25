@@ -30,17 +30,22 @@ func New() *memoryDatastore {
 	}
 }
 
-// Reader is the interface that wraps the Read method.
-//
-// Read prepares an operator manifest for a given set of package(s)
-// uniquely represeneted by the package ID(s) specified in packageIDs. It
-// returns an instance of RawOperatorManifestData that has the required set of
-// CRD(s), CSV(s) and package(s).
-//
-// The manifest returned can be used by the caller to create a ConfigMap object
-// for a catalog source (CatalogSource) in OLM.
+// Reader is the interface that wraps the read methods.
 type Reader interface {
+	// Read prepares an operator manifest for a given set of package(s)
+	// uniquely represeneted by the package ID(s) specified in packageIDs. It
+	// returns an instance of RawOperatorManifestData that has the required set of
+	// CRD(s), CSV(s) and package(s).
+	//
+	// The manifest returned can be used by the caller to create a ConfigMap object
+	// for a catalog source (CatalogSource) in OLM.
 	Read(packageIDs []string) (marshaled *RawOperatorManifestData, err error)
+
+	// ReadSingle returns the manifest for a single operated uniquely
+	// represeneted by the packageID. It returns an instance of
+	// SingleOperatorManifest that has the required set of CRD(s), CSV(s) and
+	// package.
+	ReadSingle(packageID string) (manifest *SingleOperatorManifest, err error)
 }
 
 // Writer is an interface that is used to manage the underlying datastore
@@ -143,6 +148,14 @@ func (ds *memoryDatastore) Read(packageIDs []string) (*RawOperatorManifestData, 
 	}
 
 	return ds.parser.Marshal(multiOperatorManifest)
+}
+
+func (ds *memoryDatastore) ReadSingle(packageID string) (*SingleOperatorManifest, error) {
+	singleOperatorManifest, err := ds.validate([]string{packageID})
+	if err != nil {
+		return nil, err
+	}
+	return singleOperatorManifest[0], nil
 }
 
 func (ds *memoryDatastore) Write(opsrc *v1alpha1.OperatorSource, rawManifests []*OperatorMetadata) (count int, err error) {

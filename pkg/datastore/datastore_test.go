@@ -114,6 +114,28 @@ func TestGetPackageIDsWithRedHatOperatorsYAML(t *testing.T) {
 	assert.NoError(t, csvParseErrGot)
 }
 
+func TestGetSinglePackageIDWithRedHatOperatorsYAML(t *testing.T) {
+	opsrc := &v1alpha1.OperatorSource{
+		ObjectMeta: metav1.ObjectMeta{
+			UID: types.UID("123456"),
+		},
+	}
+
+	metadata := []*datastore.OperatorMetadata{
+		helperLoadFromFile(t, "rh-operators.yaml"),
+	}
+
+	ds := datastore.New()
+	_, err := ds.Write(opsrc, metadata)
+	require.NoError(t, err)
+
+	expectedPackage := "etcd"
+	dataGot, errGot := ds.ReadSingle(expectedPackage)
+	assert.NoError(t, errGot)
+
+	assert.Equal(t, expectedPackage, dataGot.GetPackageID())
+}
+
 func TestGetPackageIDsWithMultipleOperatorSources(t *testing.T) {
 	opsrc1 := &v1alpha1.OperatorSource{
 		ObjectMeta: metav1.ObjectMeta{
@@ -155,7 +177,7 @@ func TestGetPackageIDsWithMultipleOperatorSources(t *testing.T) {
 }
 
 func helperLoadFromFile(t *testing.T, filename string) *datastore.OperatorMetadata {
-	path := filepath.Join("testdata", filename)
+	path := filepath.Join("../testdata", filename)
 
 	bytes, err := ioutil.ReadFile(path)
 	if err != nil {

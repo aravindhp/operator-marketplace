@@ -15,6 +15,8 @@ const (
 	// ClusterServiceVersion object that the current ClusterServiceVersion
 	// replaces.
 	replaces = "replaces"
+
+	version = "version"
 )
 
 // ClusterServiceVersion is a structured representation of cluster service
@@ -80,6 +82,21 @@ func (csv *ClusterServiceVersion) GetCustomResourceDefintions() (owned []*CRDKey
 	owned = definitions.Owned
 	required = definitions.Required
 	return
+}
+
+// GetVersion returns the version of the CSV
+func (csv *ClusterServiceVersion) GetVersion() (string, error) {
+	rawValue, err := csv.getRawValue(version)
+	if err != nil || rawValue == nil {
+		return "", err
+	}
+
+	var csvVersion string
+	if err := json.Unmarshal(*rawValue, &csvVersion); err != nil {
+		return "", err
+	}
+
+	return csvVersion, nil
 }
 
 func (csv *ClusterServiceVersion) getRawValue(key string) (rawValue *json.RawMessage, err error) {
