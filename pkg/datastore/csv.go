@@ -38,14 +38,9 @@ type ClusterServiceVersion struct {
 //
 // If not defined, the function returns an empty string.
 func (csv *ClusterServiceVersion) GetReplaces() (string, error) {
-	var objmap map[string]*json.RawMessage
-	if err := json.Unmarshal(csv.Spec, &objmap); err != nil {
+	rawValue, err := csv.getRawValue(replaces)
+	if err != nil || rawValue == nil {
 		return "", err
-	}
-
-	rawValue, ok := objmap[replaces]
-	if !ok || rawValue == nil {
-		return "", nil
 	}
 
 	var replaces string
@@ -68,14 +63,8 @@ func (csv *ClusterServiceVersion) GetReplaces() (string, error) {
 // If owned or required is not defined in the spec then an empty list is
 // returned respectively.
 func (csv *ClusterServiceVersion) GetCustomResourceDefintions() (owned []*CRDKey, required []*CRDKey, err error) {
-	var objmap map[string]*json.RawMessage
-
-	if err = json.Unmarshal(csv.Spec, &objmap); err != nil {
-		return
-	}
-
-	rawValue, ok := objmap[customResourceDefinitions]
-	if !ok || rawValue == nil {
+	rawValue, err := csv.getRawValue(customResourceDefinitions)
+	if err != nil || rawValue == nil {
 		return
 	}
 
@@ -90,5 +79,19 @@ func (csv *ClusterServiceVersion) GetCustomResourceDefintions() (owned []*CRDKey
 
 	owned = definitions.Owned
 	required = definitions.Required
+	return
+}
+
+func (csv *ClusterServiceVersion) getRawValue(key string) (rawValue *json.RawMessage, err error) {
+	var objmap map[string]*json.RawMessage
+
+	if err = json.Unmarshal(csv.Spec, &objmap); err != nil {
+		return
+	}
+
+	rawValue, ok := objmap[key]
+	if !ok || rawValue == nil {
+		return
+	}
 	return
 }
