@@ -1,6 +1,7 @@
 package shared
 
 import (
+	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -34,4 +35,18 @@ func RemoveFinalizer(objectMeta *metav1.ObjectMeta, deletingFinalizer string) {
 	objectMeta.Finalizers = outFinalizers
 
 	return
+}
+
+// IsObjectInOtherNamespace returns true if the namespace is not the watched
+// namespace of the operator
+func IsObjectInOtherNamespace(namespace string) bool {
+	watchNamespace, err := k8sutil.GetWatchNamespace()
+	if err != nil {
+		return false
+	}
+
+	if namespace != watchNamespace {
+		return true
+	}
+	return false
 }

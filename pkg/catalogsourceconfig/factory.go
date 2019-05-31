@@ -5,6 +5,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
+	"github.com/operator-framework/operator-marketplace/pkg/apis/operators/shared"
 	"github.com/operator-framework/operator-marketplace/pkg/apis/operators/v2"
 	"github.com/operator-framework/operator-marketplace/pkg/datastore"
 
@@ -38,6 +39,15 @@ type phaseReconcilerFactory struct {
 }
 
 func (f *phaseReconcilerFactory) GetPhaseReconciler(log *logrus.Entry, csc *v2.CatalogSourceConfig) (Reconciler, error) {
+	currentPhase := csc.Status.CurrentPhase.Name
+
+	// We will only reconcile objects in the operator's namespace. If the object
+	// was created in some other namespace, invoke the other namespace
+	// reconciler that will place it in the failed phase.
+	if shared.IsObjectInOtherNamespace(csc.GetNamespace()) {
+		return NewOtherNamespaceReconciler(log), nil
+	}
+
 	// If the object has a deletion timestamp, it means it has been marked for
 	// deletion. Return a deleted reconciler to remove that csc data from
 	// the cache, and remove the finalizer so the garbage collector can
@@ -57,7 +67,6 @@ func (f *phaseReconcilerFactory) GetPhaseReconciler(log *logrus.Entry, csc *v2.C
 		}
 	}
 
-	currentPhase := csc.Status.CurrentPhase.Name
 	switch currentPhase {
 	case phase.Initial:
 		return NewInitialReconciler(log), nil
