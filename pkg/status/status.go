@@ -230,35 +230,35 @@ func (s *status) setStatusCondition(statusCondition configv1.ClusterOperatorStat
 
 // updateStatus makes the API call to update the ClusterOperator if the status has changed.
 func (s *status) updateStatus(previousStatus *configv1.ClusterOperatorStatus) error {
-	var err error
 	if compareClusterOperatorStatusConditionArrays(previousStatus.Conditions, s.clusterOperator.Status.Conditions) {
 		log.Debugf("[status] Previous and current ClusterOperator Status are the same, the ClusterOperator Status will not be updated.")
-	} else {
-		log.Debugf("[status] Previous and current ClusterOperator Status are different, attempting to update the ClusterOperator Status.")
-
-		// Check if the ClusterOperator version has changed and log the attempt to upgrade if it has
-		previousVersion := operatorhelpers.FindOperandVersion(previousStatus.Versions, "operator")
-		currentVersion := operatorhelpers.FindOperandVersion(s.clusterOperator.Status.Versions, "operator")
-		if currentVersion != nil {
-			if previousVersion == nil {
-				log.Infof("[status] Attempting to set ClusterOperator to version %s", currentVersion.Version)
-			} else if previousVersion.Version != currentVersion.Version {
-				log.Infof("[status] Attempting to upgrade ClusterOperator version from %s to %s", previousVersion.Version, currentVersion.Version)
-			}
-		}
-
-		// Log Conditions
-		log.Infof("[status] Attempting to set the ClusterOperator status conditions to:")
-		for _, statusCondition := range s.clusterOperator.Status.Conditions {
-			log.Infof("[status] ConditionType: %v ConditionStatus: ConditionMessage: %v", statusCondition.Type, statusCondition.Status, statusCondition.Message)
-		}
-
-		_, err := s.configClient.ClusterOperators().UpdateStatus(s.clusterOperator)
-		if err != nil {
-			return fmt.Errorf("Error %v updating ClusterOperator", err)
-		}
-		log.Info("[status] ClusterOperator status conditions updated.")
+		return nil
 	}
+
+	log.Debugf("[status] Previous and current ClusterOperator Status are different, attempting to update the ClusterOperator Status.")
+
+	// Check if the ClusterOperator version has changed and log the attempt to upgrade if it has
+	previousVersion := operatorhelpers.FindOperandVersion(previousStatus.Versions, "operator")
+	currentVersion := operatorhelpers.FindOperandVersion(s.clusterOperator.Status.Versions, "operator")
+	if currentVersion != nil {
+		if previousVersion == nil {
+			log.Infof("[status] Attempting to set ClusterOperator to version %s", currentVersion.Version)
+		} else if previousVersion.Version != currentVersion.Version {
+			log.Infof("[status] Attempting to upgrade ClusterOperator version from %s to %s", previousVersion.Version, currentVersion.Version)
+		}
+	}
+
+	// Log Conditions
+	log.Infof("[status] Attempting to set the ClusterOperator status conditions to:")
+	for _, statusCondition := range s.clusterOperator.Status.Conditions {
+		log.Infof("[status] ConditionType: %v ConditionStatus: %v ConditionMessage: %v", statusCondition.Type, statusCondition.Status, statusCondition.Message)
+	}
+
+	_, err := s.configClient.ClusterOperators().UpdateStatus(s.clusterOperator)
+	if err != nil {
+		return fmt.Errorf("Error %v updating ClusterOperator", err)
+	}
+	log.Info("[status] ClusterOperator status conditions updated.")
 	return err
 }
 

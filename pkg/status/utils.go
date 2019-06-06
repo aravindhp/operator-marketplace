@@ -19,11 +19,7 @@ func compareClusterOperatorStatusConditionArrays(a []configv1.ClusterOperatorSta
 		if bCondition == nil {
 			return false
 		}
-		isEqual := false
-		if compareClusterOperatorStatusConditions(aCondition, *bCondition) {
-			isEqual = true
-		}
-		if !isEqual {
+		if !compareClusterOperatorStatusConditions(aCondition, *bCondition) {
 			return false
 		}
 	}
